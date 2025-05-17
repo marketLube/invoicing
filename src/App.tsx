@@ -10,16 +10,45 @@ import AuthPage from './pages/Auth';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   useEffect(() => {
     // Check initial auth state
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
-    });
+    const checkAuthState = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Auth session error:', error.message);
+          setIsAuthenticated(false);
+          // Clear any corrupted session data
+          localStorage.removeItem('supabase.auth.token');
+        } else {
+          setIsAuthenticated(!!data.session);
+        }
+      } catch (err) {
+        console.error('Unexpected auth error:', err);
+        setIsAuthenticated(false);
+      } finally {
+        setAuthInitialized(true);
+      }
+    };
+
+    checkAuthState();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change:', event);
+      
+      if (event === 'SIGNED_IN') {
+        setIsAuthenticated(true);
+      } else if (event === 'SIGNED_OUT') {
+        setIsAuthenticated(false);
+      } else if (event === 'TOKEN_REFRESHED') {
+        setIsAuthenticated(!!session);
+      } else if (event === 'USER_UPDATED') {
+        setIsAuthenticated(!!session);
+      }
     });
 
     return () => {
@@ -28,7 +57,7 @@ function App() {
   }, []);
 
   // Show loading state while checking auth
-  if (isAuthenticated === null) {
+  if (!authInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse text-primary-900">Loading...</div>

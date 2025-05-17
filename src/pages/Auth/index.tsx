@@ -1,10 +1,33 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '../../lib/supabase';
 import { FileText } from 'lucide-react';
 
 const AuthPage: React.FC = () => {
+  useEffect(() => {
+    // Check if there's any session issues on page load
+    const checkAndFixSession = async () => {
+      try {
+        // Try to get the current session
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Session check error:', error.message);
+          // Clear any potentially corrupted session data
+          localStorage.removeItem('supabase.auth.token');
+          await supabase.auth.signOut();
+        }
+      } catch (err) {
+        console.error('Unexpected error during session check:', err);
+        // Force clear any potentially corrupted session data
+        localStorage.removeItem('supabase.auth.token');
+      }
+    };
+    
+    checkAndFixSession();
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-50 px-4">
       <div className="flex items-center gap-2 mb-8">
@@ -30,10 +53,12 @@ const AuthPage: React.FC = () => {
               button: 'auth-button',
               input: 'auth-input',
               label: 'auth-label',
+              message: 'text-sm text-red-600 my-1',
             }
           }}
           providers={[]}
           theme="light"
+          redirectTo={window.location.origin}
         />
       </div>
     </div>

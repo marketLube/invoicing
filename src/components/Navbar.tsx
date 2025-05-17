@@ -5,14 +5,32 @@ import { supabase } from '../lib/supabase';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
+    if (isLoggingOut) return; // Prevent multiple clicks
+    
     try {
-      await supabase.auth.signOut();
-      navigate('/auth');
+      setIsLoggingOut(true);
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Error logging out:', error.message);
+        alert('Failed to log out. Please try again.');
+        return;
+      }
+      
+      // Clear any local storage cache that might be persisting the session
+      localStorage.removeItem('supabase.auth.token');
+      
+      // Force navigate to auth page
+      window.location.href = '/auth';
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error('Unexpected error logging out:', error);
+      alert('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -67,10 +85,11 @@ const Navbar: React.FC = () => {
               
               <button
                 onClick={handleLogout}
+                disabled={isLoggingOut}
                 className="btn btn-outline flex items-center gap-2"
               >
                 <LogOut size={16} />
-                <span>Logout</span>
+                <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
               </button>
             </div>
           </div>
@@ -119,10 +138,11 @@ const Navbar: React.FC = () => {
               </Link>
               <button
                 onClick={handleLogout}
+                disabled={isLoggingOut}
                 className="btn btn-outline w-full justify-center mt-2"
               >
                 <LogOut size={16} />
-                <span>Logout</span>
+                <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
               </button>
             </nav>
           </div>
