@@ -80,7 +80,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ invoices }) => {
             <th className="px-4 py-3 text-left w-[150px]">Invoice #</th>
             <th className="px-4 py-3 text-left w-[120px]">Date</th>
             <th className="px-4 py-3 text-left w-[150px]">Client</th>
-            <th className="px-4 py-3 text-left w-[120px]">Payment Type</th>
+            <th className="px-4 py-3 text-left w-[140px] whitespace-nowrap">Payment Type</th>
             <th className="px-4 py-3 text-right w-[120px]">Total (₹)</th>
             <th className="px-4 py-3 text-left w-[150px]">Remark</th>
             <th className="px-4 py-3 text-center w-[120px]">Actions</th>
@@ -157,7 +157,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ invoices }) => {
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 w-[120px]">{invoice.paymentType}</td>
+                <td className="px-4 py-3 w-[140px] whitespace-nowrap">{invoice.paymentType}</td>
                 <td className="px-4 py-3 text-right font-medium w-[120px]">
                   <span className="font-sans">₹</span>
                   <span className="font-poppins">{formatCurrency(invoice.total).slice(1)}</span>
