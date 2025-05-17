@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Edit, Copy, Filter, Settings, Plus, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Edit, Copy, Filter, Settings, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useInvoices } from '../../context/InvoiceContext';
 import DateRangeFilter from './DateRangeFilter';
 import InvoiceTable from './InvoiceTable';
@@ -128,13 +128,6 @@ const Dashboard: React.FC = () => {
     <div className="space-y-4 sm:space-y-6 w-full max-w-full">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h2 className="text-xl sm:text-2xl font-semibold text-neutral-800">Invoice Dashboard</h2>
-        <Link 
-          to="/invoice/new" 
-          className="btn btn-primary w-full sm:w-auto justify-center"
-        >
-          <Plus size={16} />
-          <span>New Invoice</span>
-        </Link>
       </div>
       
       <div className="card w-full">
