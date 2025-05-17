@@ -139,7 +139,27 @@ const InvoiceForm: React.FC = () => {
   };
   
   const handleDateChange = (field: 'date' | 'dueDate', date: Date) => {
-    setInvoice(prev => ({ ...prev, [field]: date }));
+    if (field === 'date') {
+      // If invoice date is changed, ensure due date is not before it
+      if (invoice.dueDate < date) {
+        // If due date is now before invoice date, set due date to invoice date
+        setInvoice(prev => ({ 
+          ...prev, 
+          [field]: date,
+          dueDate: date 
+        }));
+      } else {
+        // Just update the invoice date
+        setInvoice(prev => ({ ...prev, [field]: date }));
+      }
+    } else if (field === 'dueDate') {
+      // If the due date is being set earlier than invoice date, don't update
+      if (date < invoice.date) {
+        alert('Due date cannot be earlier than invoice date');
+        return;
+      }
+      setInvoice(prev => ({ ...prev, [field]: date }));
+    }
   };
   
   const handlePaymentTypeChange = (type: PaymentType) => {
@@ -180,6 +200,12 @@ const InvoiceForm: React.FC = () => {
     
     if (invoice.items.some(item => !item.description || item.quantity <= 0)) {
       alert('Please fill in all item details (description and quantity)');
+      return false;
+    }
+    
+    // Validate due date is not before invoice date
+    if (invoice.dueDate < invoice.date) {
+      alert('Due date cannot be earlier than invoice date');
       return false;
     }
     

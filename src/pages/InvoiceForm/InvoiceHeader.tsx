@@ -76,7 +76,12 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
                 onChange={(date: Date) => onDateChange('dueDate', date)}
                 dateFormat="dd/MM/yyyy"
                 className="input w-full"
+                minDate={date}
+                placeholderText="Select due date"
               />
+              <div className="text-xs text-gray-500 mt-1">
+                Cannot be before invoice date
+              </div>
             </div>
           </div>
           
