@@ -45,7 +45,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChange }) => {
         {isSearching ? (
           <Loader2 size={16} className="text-primary-500 animate-spin" />
         ) : (
-          <Search size={16} className="text-neutral-400" />
+        <Search size={16} className="text-neutral-400" />
         )}
       </div>
       <input

@@ -337,6 +337,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
 
+      // Update client information
       const { error: clientError } = await supabase
         .from('clients')
         .update({
@@ -351,6 +352,7 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
 
+      // Update invoice details
       const { error: invoiceError } = await supabase
         .from('invoices')
         .update({
@@ -380,11 +382,22 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
 
-      const { error: itemsError } = await supabase
+      // First delete all existing line items
+      const { error: deleteError } = await supabase
         .from('invoice_items')
-        .upsert(
+        .delete()
+        .eq('invoice_id', id);
+      
+      if (deleteError) {
+        setError(`Error deleting existing invoice items: ${deleteError.message}`);
+        return;
+      }
+
+      // Then insert all current items (both original and newly added)
+      const { error: insertError } = await supabase
+        .from('invoice_items')
+        .insert(
           invoice.items.map(item => ({
-            id: item.id,
             invoice_id: id,
             description: item.description,
             quantity: item.quantity,
@@ -392,11 +405,12 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
           }))
         );
 
-      if (itemsError) {
-        setError(`Error updating invoice items: ${itemsError.message}`);
+      if (insertError) {
+        setError(`Error adding updated invoice items: ${insertError.message}`);
         return;
       }
 
+      // Reload invoices to refresh the state
       await loadInvoices(pagination.currentPage);
     } catch (err: any) {
       setError(`Error updating invoice: ${err.message}`);

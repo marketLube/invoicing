@@ -103,6 +103,7 @@ const InvoiceForm: React.FC = () => {
     }));
   };
   
+  // Always recalculate amounts when relevant fields change
   useEffect(() => {
     calculateAmounts();
   }, [
@@ -225,14 +226,53 @@ const InvoiceForm: React.FC = () => {
   };
   
   const handleSave = async () => {
+    // Force recalculate amounts before saving
+    calculateAmounts();
+    
     const isValid = await validateInvoice();
     if (!isValid) return;
     
     if (isEditMode) {
-      updateInvoice(invoice.id, invoice);
+      // Calculate all values in the correct order
+      const subtotal = calculateSubtotal(invoice.items);
+      const discountAmount = calculateDiscountAmount(
+        subtotal,
+        invoice.discountType,
+        invoice.discountValue
+      );
+      const taxAmount = calculateTaxAmount(
+        subtotal,
+        discountAmount,
+        invoice.taxMode,
+        invoice.taxRate
+      );
+      const total = calculateTotal(
+        subtotal,
+        discountAmount,
+        taxAmount
+      );
+      
+      // Make sure to use the freshly calculated values
+      const updatedInvoice = {
+        ...invoice,
+        subtotal,
+        discountAmount,
+        taxAmount,
+        total
+      };
+      
+      // Update the invoice with the latest data
+      updateInvoice(id!, updatedInvoice);
     } else {
-      addInvoice({ ...invoice, id: Date.now().toString() });
+      // For new invoices
+      const newInvoice = {
+        ...invoice,
+        id: Date.now().toString()
+      };
+      addInvoice(newInvoice);
     }
+    
+    // Navigate back to the dashboard
     navigate('/');
   };
   
@@ -255,6 +295,9 @@ const InvoiceForm: React.FC = () => {
       // Validate and save invoice first
       const isValid = await validateInvoice();
       if (!isValid) return;
+      
+      // Force recalculate amounts before generating PDF
+      calculateAmounts();
       
       // If it's a new invoice or has been modified, save it first
       if (!isEditMode) {
@@ -336,21 +379,25 @@ const InvoiceForm: React.FC = () => {
           onChange={handleItemsChange}
         />
         
-        <DiscountTaxSection
-          discountType={invoice.discountType}
-          discountValue={invoice.discountValue}
-          taxMode={invoice.taxMode}
-          taxRate={invoice.taxRate}
-          onChange={handleDiscountTaxChange}
-        />
+        <div className="mb-4">
+          <DiscountTaxSection
+            discountType={invoice.discountType}
+            discountValue={invoice.discountValue}
+            taxMode={invoice.taxMode}
+            taxRate={invoice.taxRate}
+            onChange={handleDiscountTaxChange}
+          />
+        </div>
         
-        <Summary
-          subtotal={invoice.subtotal}
-          taxMode={invoice.taxMode}
-          taxAmount={invoice.taxAmount}
-          discountAmount={invoice.discountAmount}
-          total={invoice.total}
-        />
+        <div className="mt-6">
+          <Summary
+            subtotal={invoice.subtotal}
+            taxMode={invoice.taxMode}
+            taxAmount={invoice.taxAmount}
+            discountAmount={invoice.discountAmount}
+            total={invoice.total}
+          />
+        </div>
         
         <div className="flex justify-end gap-4 mt-8">
           <button

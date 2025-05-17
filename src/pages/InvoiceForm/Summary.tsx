@@ -17,8 +17,8 @@ const Summary: React.FC<SummaryProps> = ({
   taxMode,
 }) => {
   return (
-    <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 ml-auto">
-      <h3 className="text-primary-900 font-semibold mb-3">SUMMARY</h3>
+    <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+      <h3 className="text-primary-900 font-medium mb-3">SUMMARY</h3>
       
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
@@ -26,7 +26,7 @@ const Summary: React.FC<SummaryProps> = ({
           <span className="font-medium">{formatCurrency(subtotal)}</span>
         </div>
         
-        {discountAmount > 0 && (
+        {discountAmount !== 0 && (
           <div className="flex justify-between text-sm">
             <span>Discount:</span>
             <span className="font-medium text-error-main">-{formatCurrency(discountAmount)}</span>

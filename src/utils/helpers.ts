@@ -25,9 +25,15 @@ export const calculateDiscountAmount = (
   discountType: 'percentage' | 'fixed',
   discountValue: number
 ): number => {
+  // For percentage discounts, calculate based on subtotal
   if (discountType === 'percentage') {
+    // If the subtotal is 0, percentage of 0 is always 0
+    if (subtotal <= 0) return 0;
     return (subtotal * discountValue) / 100;
   }
+  
+  // For fixed discounts, always use the fixed value regardless of subtotal
+  // This allows for negative totals when fixed discount > subtotal
   return discountValue;
 };
 
@@ -41,7 +47,15 @@ export const calculateTaxAmount = (
     return 0;
   }
   
+  // Calculate the amount that should be taxed (subtotal minus discount)
   const taxableAmount = subtotal - discountAmount;
+  
+  // Only apply tax if the taxable amount is positive
+  // If discount is greater than subtotal, no tax should be applied
+  if (taxableAmount <= 0) {
+    return 0;
+  }
+  
   return (taxableAmount * taxRate) / 100;
 };
 
@@ -50,7 +64,12 @@ export const calculateTotal = (
   discountAmount: number,
   taxAmount: number
 ): number => {
-  return subtotal - discountAmount + taxAmount;
+  // Calculate net amount after discount
+  const netAfterDiscount = subtotal - discountAmount;
+  
+  // If there's a fixed discount larger than the subtotal, allow negative totals
+  // Add tax to the final amount (tax will be 0 if net is negative)
+  return netAfterDiscount + taxAmount;
 };
 
 export const formatDate = (date: Date): string => {

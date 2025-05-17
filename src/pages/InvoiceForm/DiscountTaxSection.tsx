@@ -45,21 +45,27 @@ const DiscountTaxSection: React.FC<DiscountTaxSectionProps> = ({
             </button>
           </div>
           
-          <div className="flex-1">
+          <div className="max-w-[150px]">
             <div className="relative">
               {discountType === 'fixed' && (
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2">₹</span>
               )}
               <input
                 type="number"
-                className={`input w-full py-1 ${discountType === 'fixed' ? 'pl-8' : ''}`}
+                className={`input w-full py-1 ${
+                  discountType === 'fixed' ? 'pl-8' : ''
+                } ${
+                  discountType === 'percentage' ? 'pr-7' : ''
+                }`}
                 value={discountValue}
                 min="0"
                 step={discountType === 'percentage' ? '1' : '0.01'}
                 onChange={(e) => onChange('discountValue', parseFloat(e.target.value) || 0)}
+                onClick={(e) => e.currentTarget.select()}
+                onFocus={(e) => e.currentTarget.select()}
               />
               {discountType === 'percentage' && (
-                <span className="absolute right-3 top-1/2 transform -translate-y-1/2">%</span>
+                <span className="absolute right-6 top-1/2 transform -translate-y-1/2">%</span>
               )}
             </div>
           </div>
