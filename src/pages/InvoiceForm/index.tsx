@@ -8,7 +8,7 @@ import ClientInfo from './ClientInfo';
 import LineItemsTable from './LineItemsTable';
 import DiscountTaxSection from './DiscountTaxSection';
 import Summary from './Summary';
-import { generateInvoiceNumber, calculateSubtotal, calculateDiscountAmount, calculateTaxAmount, calculateTotal } from '../../utils/helpers';
+import { generateInvoiceNumber, calculateSubtotal, calculateDiscountAmount, calculateTaxAmount, calculateTotal, isInvoiceNumberUnique } from '../../utils/helpers';
 import { Invoice, LineItem, Client, PaymentType } from '../../types';
 import { pdf } from '@react-pdf/renderer';
 import InvoicePDF from '../PDFGenerator/InvoicePDF';
@@ -27,7 +27,7 @@ const InvoiceForm: React.FC = () => {
   
   const initialInvoice: Invoice = {
     id: '',
-    invoiceNumber: generateInvoiceNumber(),
+    invoiceNumber: '', // Will be set asynchronously
     date: new Date(),
     dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
     client: {
@@ -47,21 +47,36 @@ const InvoiceForm: React.FC = () => {
     discountAmount: 0,
     taxAmount: 0,
     total: 0,
+    paymentInfo: paymentInfo,
   };
   
   const [invoice, setInvoice] = useState<Invoice>(initialInvoice);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isCheckingNumber, setIsCheckingNumber] = useState(false);
+  const [numberError, setNumberError] = useState<string | null>(null);
   const isEditMode = !!id;
   
   useEffect(() => {
-    if (isEditMode) {
-      const existingInvoice = getInvoice(id!);
-      if (existingInvoice) {
-        setInvoice(existingInvoice);
+    const initializeInvoice = async () => {
+      if (isEditMode) {
+        const existingInvoice = getInvoice(id!);
+        if (existingInvoice) {
+          setInvoice(existingInvoice);
+        } else {
+          navigate('/');
+        }
       } else {
-        navigate('/');
+        // Generate a new invoice number
+        try {
+          const newInvoiceNumber = await generateInvoiceNumber();
+          setInvoice(prev => ({ ...prev, invoiceNumber: newInvoiceNumber }));
+        } catch (error) {
+          console.error("Error generating invoice number:", error);
+        }
       }
-    }
+    };
+
+    initializeInvoice();
   }, [id, getInvoice, navigate, isEditMode]);
   
   const calculateAmounts = () => {
@@ -98,9 +113,29 @@ const InvoiceForm: React.FC = () => {
     invoice.taxRate
   ]);
   
-  const handleInvoiceMetaChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInvoiceMetaChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setInvoice(prev => ({ ...prev, [name]: value }));
+    
+    if (name === 'invoiceNumber') {
+      // Check if invoice number is unique
+      setIsCheckingNumber(true);
+      setNumberError(null);
+      
+      setInvoice(prev => ({ ...prev, [name]: value }));
+      
+      try {
+        const isUnique = await isInvoiceNumberUnique(value, isEditMode ? id : undefined);
+        if (!isUnique) {
+          setNumberError('This invoice number already exists. Please use a different one.');
+        }
+      } catch (error) {
+        console.error("Error checking invoice number uniqueness:", error);
+      } finally {
+        setIsCheckingNumber(false);
+      }
+    } else {
+      setInvoice(prev => ({ ...prev, [name]: value }));
+    }
   };
   
   const handleDateChange = (field: 'date' | 'dueDate', date: Date) => {
@@ -126,7 +161,47 @@ const InvoiceForm: React.FC = () => {
     setInvoice(prev => ({ ...prev, [field]: value }));
   };
   
-  const handleSave = () => {
+  const validateInvoice = async (): Promise<boolean> => {
+    // Basic validation
+    if (!invoice.invoiceNumber) {
+      alert('Please enter an invoice number');
+      return false;
+    }
+    
+    if (!invoice.client.name) {
+      alert('Please enter a client name');
+      return false;
+    }
+    
+    if (invoice.items.length === 0) {
+      alert('Please add at least one item');
+      return false;
+    }
+    
+    if (invoice.items.some(item => !item.description || item.quantity <= 0)) {
+      alert('Please fill in all item details (description and quantity)');
+      return false;
+    }
+    
+    // Check invoice number uniqueness
+    try {
+      const isUnique = await isInvoiceNumberUnique(invoice.invoiceNumber, isEditMode ? id : undefined);
+      if (!isUnique) {
+        setNumberError('This invoice number already exists. Please use a different one.');
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error("Error checking invoice number uniqueness:", error);
+      alert('Failed to validate invoice number. Please try again.');
+      return false;
+    }
+  };
+  
+  const handleSave = async () => {
+    const isValid = await validateInvoice();
+    if (!isValid) return;
+    
     if (isEditMode) {
       updateInvoice(invoice.id, invoice);
     } else {
@@ -142,12 +217,31 @@ const InvoiceForm: React.FC = () => {
         setInvoice(existingInvoice);
       }
     } else {
-      setInvoice(initialInvoice);
+      setInvoice(prev => ({ ...prev, items: [emptyLineItem] }));
+      generateInvoiceNumber().then(newNumber => {
+        setInvoice(prev => ({ ...prev, invoiceNumber: newNumber }));
+      });
     }
   };
 
   const handleDownloadPDF = async () => {
     try {
+      // Validate and save invoice first
+      const isValid = await validateInvoice();
+      if (!isValid) return;
+      
+      // If it's a new invoice or has been modified, save it first
+      if (!isEditMode) {
+        await addInvoice({ ...invoice, id: Date.now().toString() });
+      } else {
+        // Check if the invoice has been modified
+        const originalInvoice = getInvoice(id!);
+        if (JSON.stringify(originalInvoice) !== JSON.stringify(invoice)) {
+          await updateInvoice(invoice.id, invoice);
+        }
+      }
+      
+      // Now generate and download the PDF
       setIsGeneratingPDF(true);
       const blob = await pdf(<InvoicePDF invoice={invoice} paymentInfo={paymentInfo} />).toBlob();
       const url = URL.createObjectURL(blob);
@@ -158,8 +252,12 @@ const InvoiceForm: React.FC = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      
+      // Navigate back to dashboard after successful download
+      navigate('/');
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('Error handling PDF download:', error);
+      alert('Failed to generate PDF. Please try again.');
     } finally {
       setIsGeneratingPDF(false);
     }
@@ -193,6 +291,8 @@ const InvoiceForm: React.FC = () => {
           dueDate={invoice.dueDate}
           onInvoiceNumberChange={handleInvoiceMetaChange}
           onDateChange={handleDateChange}
+          numberError={numberError}
+          isCheckingNumber={isCheckingNumber}
         />
         
         <InvoiceType
@@ -210,61 +310,38 @@ const InvoiceForm: React.FC = () => {
           onChange={handleItemsChange}
         />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <DiscountTaxSection
-            discountType={invoice.discountType}
-            discountValue={invoice.discountValue}
-            taxMode={invoice.taxMode}
-            taxRate={invoice.taxRate}
-            onChange={handleDiscountTaxChange}
-          />
-          
-          <Summary
-            subtotal={invoice.subtotal}
-            discountAmount={invoice.discountAmount}
-            taxAmount={invoice.taxAmount}
-            total={invoice.total}
-            taxMode={invoice.taxMode}
-          />
-        </div>
-      </div>
-      
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 py-2 px-3 sm:py-3 sm:px-4 z-50">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
+        <DiscountTaxSection
+          discountType={invoice.discountType}
+          discountValue={invoice.discountValue}
+          taxMode={invoice.taxMode}
+          taxRate={invoice.taxRate}
+          onChange={handleDiscountTaxChange}
+        />
+        
+        <Summary
+          subtotal={invoice.subtotal}
+          taxMode={invoice.taxMode}
+          taxAmount={invoice.taxAmount}
+          discountAmount={invoice.discountAmount}
+          total={invoice.total}
+        />
+        
+        <div className="flex justify-end gap-4 mt-8">
           <button
-            className="btn btn-sm btn-outline flex items-center gap-1.5 min-w-[84px] justify-center text-xs sm:text-sm"
-            onClick={() => navigate('/')}
+            className="btn btn-outline flex items-center gap-2"
+            onClick={handleReset}
           >
-            <Home size={14} />
-            <span>Home</span>
+            <RotateCcw size={16} />
+            Reset
           </button>
           
-          <div className="flex items-center gap-2">
-            <button
-              className="btn btn-sm btn-outline flex items-center gap-1.5 min-w-[72px] justify-center text-xs sm:text-sm"
-              onClick={handleReset}
-            >
-              <RotateCcw size={14} />
-              <span>Reset</span>
-            </button>
-            
-            <button
-              className="btn btn-sm btn-primary flex items-center gap-1.5 min-w-[72px] justify-center text-xs sm:text-sm"
-              onClick={handleSave}
-            >
-              <Save size={14} />
-              <span>Save</span>
-            </button>
-            
-            <button
-              onClick={handleDownloadPDF}
-              disabled={isGeneratingPDF}
-              className="btn btn-sm btn-primary flex items-center gap-1.5 min-w-[84px] justify-center text-xs sm:text-sm"
-            >
-              <Download size={14} />
-              <span>{isGeneratingPDF ? 'Loading...' : 'Download'}</span>
-            </button>
-          </div>
+          <button
+            className="btn btn-primary flex items-center gap-2"
+            onClick={handleSave}
+          >
+            <Save size={16} />
+            Save Invoice
+          </button>
         </div>
       </div>
     </div>

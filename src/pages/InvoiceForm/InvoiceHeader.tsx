@@ -9,6 +9,8 @@ interface InvoiceHeaderProps {
   dueDate: Date;
   onInvoiceNumberChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onDateChange: (field: 'date' | 'dueDate', date: Date) => void;
+  numberError?: string | null;
+  isCheckingNumber?: boolean;
 }
 
 const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
@@ -17,6 +19,8 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   dueDate,
   onInvoiceNumberChange,
   onDateChange,
+  numberError,
+  isCheckingNumber,
 }) => {
   return (
     <div className="flex flex-col md:flex-row justify-between items-start mb-6">
@@ -42,10 +46,16 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
               type="text"
               id="invoiceNumber"
               name="invoiceNumber"
-              className="input w-full"
+              className={`input w-full ${numberError ? 'border-red-500' : ''}`}
               value={invoiceNumber}
               onChange={onInvoiceNumberChange}
             />
+            {isCheckingNumber && (
+              <div className="text-xs text-blue-600 mt-1">Checking invoice number...</div>
+            )}
+            {numberError && (
+              <div className="text-xs text-red-600 mt-1">{numberError}</div>
+            )}
           </div>
           
           <div className="grid grid-cols-2 gap-4">

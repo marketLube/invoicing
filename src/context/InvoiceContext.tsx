@@ -455,7 +455,37 @@ export const InvoiceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
 
-      const newInvoiceNumber = generateInvoiceNumber();
+      // Generate a new unique invoice number
+      let newInvoiceNumber = await generateInvoiceNumber();
+      let isUnique = false;
+      let attempts = 0;
+      
+      // Make up to 3 attempts to generate a unique invoice number
+      while (!isUnique && attempts < 3) {
+        try {
+          // Check if the new invoice number is unique
+          const { data, error } = await supabase
+            .from('invoices')
+            .select('id')
+            .eq('invoice_number', newInvoiceNumber)
+            .eq('user_id', session.user.id);
+            
+          if (error) {
+            throw error;
+          }
+          
+          isUnique = !data || data.length === 0;
+          if (!isUnique) {
+            // If not unique, generate a new one
+            newInvoiceNumber = await generateInvoiceNumber();
+          }
+        } catch (err) {
+          console.error("Error checking invoice number uniqueness:", err);
+          break;
+        }
+        
+        attempts++;
+      }
 
       const { data: clientData, error: clientError } = await supabase
         .from('clients')

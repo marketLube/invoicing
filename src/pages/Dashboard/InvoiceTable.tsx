@@ -44,6 +44,11 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ invoices }) => {
   const handleDownloadPDF = async (invoice: Invoice) => {
     try {
       setDownloadingId(invoice.id);
+      
+      // Ensure the invoice is saved with the latest data before downloading
+      await updateInvoice(invoice.id, invoice);
+      
+      // Generate and download the PDF
       const blob = await pdf(<InvoicePDF invoice={invoice} paymentInfo={invoice.paymentInfo} />).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
