@@ -94,11 +94,11 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ invoices }) => {
         <tbody>
           {invoices.length === 0 ? (
             <>
-              <tr className="table-row">
+            <tr className="table-row">
                 <td colSpan={8} className="px-4 py-4 text-center text-neutral-500 border-b border-neutral-200">
-                  No invoices found. Create a new invoice to get started.
-                </td>
-              </tr>
+                No invoices found. Create a new invoice to get started.
+              </td>
+            </tr>
               {createEmptyRows()}
             </>
           ) : (
@@ -135,9 +135,9 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ invoices }) => {
                         : invoice.invoiceNumber || 'N/A'}
                     </span>
                     {invoice.invoiceNumber && invoice.invoiceNumber.length > 15 && (
-                      <div className="absolute left-0 top-full mt-1 bg-white border border-neutral-200 rounded-lg p-2 shadow-lg z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                        {invoice.invoiceNumber}
-                      </div>
+                    <div className="absolute left-0 top-full mt-1 bg-white border border-neutral-200 rounded-lg p-2 shadow-lg z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                      {invoice.invoiceNumber}
+                    </div>
                     )}
                   </div>
                 </td>
@@ -150,15 +150,15 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ invoices }) => {
                         : 'Unknown client'}
                     </span>
                     {invoice.client && invoice.client.name && (
-                      <div className="absolute left-0 top-full mt-1 bg-white border border-neutral-200 rounded-lg p-2 shadow-lg z-10 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                        <div className="font-medium">{invoice.client.name}</div>
+                    <div className="absolute left-0 top-full mt-1 bg-white border border-neutral-200 rounded-lg p-2 shadow-lg z-10 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                      <div className="font-medium">{invoice.client.name}</div>
                         {invoice.client.address && (
-                          <div className="text-sm text-neutral-600 mt-1">{invoice.client.address}</div>
+                      <div className="text-sm text-neutral-600 mt-1">{invoice.client.address}</div>
                         )}
-                        {invoice.client.gstin && (
-                          <div className="text-sm text-neutral-600">GSTIN: {invoice.client.gstin}</div>
-                        )}
-                      </div>
+                      {invoice.client.gstin && (
+                        <div className="text-sm text-neutral-600">GSTIN: {invoice.client.gstin}</div>
+                      )}
+                    </div>
                     )}
                   </div>
                 </td>

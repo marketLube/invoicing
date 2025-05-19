@@ -11,23 +11,33 @@ import AuthPage from './pages/Auth';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     // Check initial auth state
     const checkAuthState = async () => {
       try {
+        console.log('Checking auth state...');
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Auth session error:', error.message);
+          setAuthError(error.message);
           setIsAuthenticated(false);
           // Clear any corrupted session data
           localStorage.removeItem('supabase.auth.token');
+          try {
+            await supabase.auth.signOut();
+          } catch (e) {
+            console.error('Error during sign out:', e);
+          }
         } else {
+          console.log('Auth session data:', data);
           setIsAuthenticated(!!data.session);
         }
       } catch (err) {
         console.error('Unexpected auth error:', err);
+        setAuthError(err instanceof Error ? err.message : 'Unknown authentication error');
         setIsAuthenticated(false);
       } finally {
         setAuthInitialized(true);
@@ -42,6 +52,7 @@ function App() {
       
       if (event === 'SIGNED_IN') {
         setIsAuthenticated(true);
+        setAuthError(null);
       } else if (event === 'SIGNED_OUT') {
         setIsAuthenticated(false);
       } else if (event === 'TOKEN_REFRESHED') {
@@ -60,7 +71,29 @@ function App() {
   if (!authInitialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-primary-900">Loading...</div>
+        <div className="flex flex-col items-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary-600 border-t-transparent rounded-full mb-4"></div>
+          <div className="text-primary-900">Initializing application...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if there was an auth error
+  if (authError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-white p-6 rounded-lg shadow-md max-w-md">
+          <h2 className="text-xl font-semibold text-red-600 mb-4">Authentication Error</h2>
+          <p className="mb-4 text-neutral-800">{authError}</p>
+          <p className="mb-6 text-neutral-600">Please try clearing your browser cache and cookies, then reload the page.</p>
+          <button 
+            className="w-full py-2 px-4 bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
+            onClick={() => window.location.reload()}
+          >
+            Reload Application
+          </button>
+        </div>
       </div>
     );
   }

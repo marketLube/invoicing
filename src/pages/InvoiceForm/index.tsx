@@ -58,13 +58,13 @@ const InvoiceForm: React.FC = () => {
   
   useEffect(() => {
     const initializeInvoice = async () => {
-      if (isEditMode) {
-        const existingInvoice = getInvoice(id!);
-        if (existingInvoice) {
-          setInvoice(existingInvoice);
-        } else {
-          navigate('/');
-        }
+    if (isEditMode) {
+      const existingInvoice = getInvoice(id!);
+      if (existingInvoice) {
+        setInvoice(existingInvoice);
+      } else {
+        navigate('/');
+      }
       } else {
         // Generate a new invoice number
         try {
@@ -135,7 +135,7 @@ const InvoiceForm: React.FC = () => {
         setIsCheckingNumber(false);
       }
     } else {
-      setInvoice(prev => ({ ...prev, [name]: value }));
+    setInvoice(prev => ({ ...prev, [name]: value }));
     }
   };
   
@@ -159,7 +159,7 @@ const InvoiceForm: React.FC = () => {
         alert('Due date cannot be earlier than invoice date');
         return;
       }
-      setInvoice(prev => ({ ...prev, [field]: date }));
+    setInvoice(prev => ({ ...prev, [field]: date }));
     }
   };
   
@@ -388,7 +388,7 @@ const InvoiceForm: React.FC = () => {
             onChange={handleDiscountTaxChange}
           />
         </div>
-        
+          
         <div className="mt-6">
           <Summary
             subtotal={invoice.subtotal}
@@ -397,8 +397,8 @@ const InvoiceForm: React.FC = () => {
             discountAmount={invoice.discountAmount}
             total={invoice.total}
           />
-        </div>
-        
+      </div>
+      
         <div className="flex justify-end gap-4 mt-8">
           <button
             className="btn btn-outline flex items-center gap-2"
@@ -408,13 +408,13 @@ const InvoiceForm: React.FC = () => {
             Reset
           </button>
           
-          <button
+            <button
             className="btn btn-primary flex items-center gap-2"
-            onClick={handleSave}
-          >
+              onClick={handleSave}
+            >
             <Save size={16} />
             Save Invoice
-          </button>
+            </button>
         </div>
       </div>
     </div>

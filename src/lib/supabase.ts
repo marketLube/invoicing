@@ -1,10 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Try to get environment variables
+let supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+let supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// If environment variables are not available, use hardcoded values
+// This is not ideal for production, but helps with development
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables');
+  console.warn('Environment variables not found. Using hardcoded fallback values for development.');
+  supabaseUrl = 'https://vxekvpfyqdzrufihmbeo.supabase.co';
+  supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ4ZWt2cGZ5cWR6cnVmaWhtYmVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODM1MzI3NjEsImV4cCI6MTk5OTEwODc2MX0.H6QmLFc5SEBoN2u2_jkuKL-MiUEVpK_M1LyjSdYgX_o';
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey);

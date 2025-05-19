@@ -9,8 +9,10 @@ import {
   Title,
   Tooltip,
   Legend,
+  BarController,
+  LineController,
 } from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
+import { Chart } from 'react-chartjs-2';
 import { format, parse, startOfMonth, endOfMonth, differenceInMonths, addMonths } from 'date-fns';
 import { Invoice } from '../../types';
 
@@ -20,6 +22,8 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
+  BarController,
+  LineController,
   Title,
   Tooltip,
   Legend
@@ -110,7 +114,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ invoices, startDate, endDat
     ],
   };
   
-  return <Bar options={chartOptions} data={data} />;
+  return <Chart type="scatter" options={chartOptions} data={data} />;
 };
 
 export default RevenueChart;

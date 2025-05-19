@@ -135,10 +135,10 @@ export const generateInvoiceNumber = async (): Promise<string> => {
   } catch (error) {
     console.error("Error generating invoice number:", error);
     // Ultimate fallback
-    const prefix = 'INV';
-    const date = format(new Date(), 'yyyyMMdd');
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `${prefix}${date}${random}`;
+  const prefix = 'INV';
+  const date = format(new Date(), 'yyyyMMdd');
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `${prefix}${date}${random}`;
   }
 };
 
