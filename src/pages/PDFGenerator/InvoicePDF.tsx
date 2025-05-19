@@ -1,7 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import { Invoice, PaymentInfo } from '../../types';
-import { formatCurrency, formatDate, calculateItemTotal } from '../../utils/helpers';
+import { formatNumberWithoutCurrency, formatDate, calculateItemTotal } from '../../utils/helpers';
 
 // Register Roboto font with CDN URLs
 Font.register({
@@ -269,15 +269,15 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, paymentInfo }) => (
           {invoice.items.map((item, index) => (
             <View key={item.id} style={[
               styles.tableRow,
-              index % 2 === 1 && styles.tableRowEven
+              index % 2 === 1 ? styles.tableRowEven : {}
             ]}>
               <Text style={[styles.tableCell, styles.descriptionCell]}>{item.description}</Text>
               <Text style={[styles.tableCell, styles.quantityCell]}>{item.quantity}</Text>
               <Text style={[styles.tableCell, styles.priceCell]}>
-                {formatCurrency(item.unitPrice)}
+                {formatNumberWithoutCurrency(item.unitPrice)}
               </Text>
               <Text style={[styles.tableCell, styles.totalCell]}>
-                {formatCurrency(calculateItemTotal(item))}
+                {formatNumberWithoutCurrency(calculateItemTotal(item))}
               </Text>
             </View>
           ))}
@@ -296,13 +296,13 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, paymentInfo }) => (
           <View style={styles.summarySection}>
             <View style={styles.summaryRow}>
               <Text>Subtotal:</Text>
-              <Text>{formatCurrency(invoice.subtotal)}</Text>
+              <Text>{formatNumberWithoutCurrency(invoice.subtotal)}</Text>
             </View>
 
             {invoice.discountAmount > 0 && (
               <View style={styles.summaryRow}>
                 <Text>Discount:</Text>
-                <Text>-{formatCurrency(invoice.discountAmount)}</Text>
+                <Text>-{formatNumberWithoutCurrency(invoice.discountAmount)}</Text>
               </View>
             )}
 
@@ -311,17 +311,17 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, paymentInfo }) => (
                 {invoice.taxMode === 'IGST' ? (
                   <View style={styles.summaryRow}>
                     <Text>IGST ({invoice.taxRate}%):</Text>
-                    <Text>{formatCurrency(invoice.taxAmount)}</Text>
+                    <Text>{formatNumberWithoutCurrency(invoice.taxAmount)}</Text>
                   </View>
                 ) : invoice.taxMode === 'CGST-SGST' ? (
                   <>
                     <View style={styles.summaryRow}>
                       <Text>CGST ({invoice.taxRate / 2}%):</Text>
-                      <Text>{formatCurrency(invoice.taxAmount / 2)}</Text>
+                      <Text>{formatNumberWithoutCurrency(invoice.taxAmount / 2)}</Text>
                     </View>
                     <View style={styles.summaryRow}>
                       <Text>SGST ({invoice.taxRate / 2}%):</Text>
-                      <Text>{formatCurrency(invoice.taxAmount / 2)}</Text>
+                      <Text>{formatNumberWithoutCurrency(invoice.taxAmount / 2)}</Text>
                     </View>
                   </>
                 ) : null}
@@ -332,7 +332,7 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, paymentInfo }) => (
 
             <View style={styles.grandTotal}>
               <Text>Grand Total:</Text>
-              <Text>{formatCurrency(invoice.total)}</Text>
+              <Text>{formatNumberWithoutCurrency(invoice.total)}</Text>
             </View>
           </View>
         </View>

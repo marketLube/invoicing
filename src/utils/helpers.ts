@@ -12,6 +12,13 @@ export const formatCurrency = (amount: number): string => {
   return `₹${formattedAmount}`;
 };
 
+export const formatNumberWithoutCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'decimal',
+    minimumFractionDigits: 2,
+  }).format(amount);
+};
+
 export const calculateItemTotal = (item: LineItem): number => {
   return item.quantity * item.unitPrice;
 };
